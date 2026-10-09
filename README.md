@@ -152,7 +152,7 @@ GitHub Actions (`.github/workflows/build.yml`) runs on a GitHub macOS machine:
 
 - **Pull requests:** the unit tests.
 - **Every push to `main`:** the tests and a full app build. The disk image can be downloaded from the run's page for 7 days.
-- **A version tag:** the same, then a GitHub Release with `Lasa.dmg` and `Lasa.zip`. The quick-install command always installs the newest release.
+- **A version tag:** a GitHub Release with `Lasa.dmg` and `Lasa.zip`. When the tagged commit was already built on `main` (within 7 days), the release reuses that app with the tag's version and skips the tests and the build; otherwise it runs both first. The quick-install command always installs the newest release.
 
 To publish a version:
 

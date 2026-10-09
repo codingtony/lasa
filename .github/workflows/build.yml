@@ -1,7 +1,10 @@
 # Pull requests: unit tests.
-# Pushes to main: tests + app build; the disk image is kept as a workflow artifact for 7 days.
-# Tags v*: tests + app build + a GitHub Release with Lasa.dmg and Lasa.zip
+# Pushes to main: tests + app build; the disk image is kept as a workflow artifact for 7 days, and
+# the app (as Lasa.zip) as app-<commit sha>, for the release of that commit.
+# Tags v*: a GitHub Release with Lasa.dmg and Lasa.zip
 # (fixed ASCII names, so .../releases/latest/download/Lasa.zip always points to the newest version).
+# When the main run of the tagged commit succeeded, the release repackages its app with the tag's
+# version instead of testing and building again; otherwise it tests and builds itself.
 name: Build
 
 on:
@@ -14,9 +17,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  # Never cancel a release in progress; superseded branch and PR runs can go.
-  cancel-in-progress: ${{ github.ref_type != 'tag' }}
+  # Pushes are grouped per commit, so a tag run waits for the main run of the same commit and can
+  # reuse its app. Only superseded pull request runs are cancelled: never a release or a main
+  # build that a release may be waiting for.
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -24,10 +29,28 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write # publish releases from tags
+      actions: read # find and download the main run's app
     steps:
       - uses: actions/checkout@v7
 
+      - name: Reuse the main build of this commit
+        id: reuse
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          run_id="$(gh run list --workflow build.yml --branch main --event push --commit "$GITHUB_SHA" \
+            --status success --limit 1 --json databaseId -q '.[0].databaseId')" || run_id=""
+          if [ -n "$run_id" ] && gh run download "$run_id" -n "app-$GITHUB_SHA" -D build/reuse; then
+            echo "Reusing the app built by run $run_id"
+            echo "app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No app from a successful main run of $GITHUB_SHA: testing and building"
+          fi
+
       - name: Cache speech engine and voices
+        if: steps.reuse.outputs.app != 'true'
         uses: actions/cache@v6
         with:
           path: Vendor
@@ -40,16 +63,29 @@ jobs:
           swift --version
 
       - name: Unit tests
+        if: steps.reuse.outputs.app != 'true'
         run: ./scripts/test.sh
 
       - name: Build app
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && steps.reuse.outputs.app != 'true'
         run: |
           if [ "$GITHUB_REF_TYPE" = tag ]; then
             export VERSION="${GITHUB_REF_NAME#v}"
           fi
           export BUILD="$GITHUB_RUN_NUMBER"
           ./scripts/build-app.sh
+
+      - name: Package reused app
+        if: steps.reuse.outputs.app == 'true'
+        run: |
+          ditto -x -k build/reuse/Lasa.zip build
+          export VERSION="${GITHUB_REF_NAME#v}"
+          export BUILD="$GITHUB_RUN_NUMBER"
+          ./scripts/package-app.sh
+
+      - name: Release file names
+        if: github.event_name == 'push'
+        run: |
           cp "build/Läsa.dmg" build/Lasa.dmg
           cp "build/Läsa.zip" build/Lasa.zip
 
@@ -59,6 +95,16 @@ jobs:
         with:
           name: Lasa-${{ github.run_number }}
           path: build/Lasa.dmg
+          retention-days: 7
+          compression-level: 0 # already compressed
+
+      # A zip made by ditto keeps the bundle's permissions and symlinks; upload-artifact does not.
+      - name: Keep app for a release
+        if: github.event_name == 'push' && github.ref_type == 'branch'
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-${{ github.sha }}
+          path: build/Lasa.zip
           retention-days: 7
           compression-level: 0 # already compressed
 
