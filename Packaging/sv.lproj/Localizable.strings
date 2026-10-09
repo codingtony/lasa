@@ -1,0 +1,93 @@
+/* Swedish interface strings. Keys are the English UI text used in the Swift sources. */
+
+/* Main window */
+"Open a PDF to start reading" = "Öppna en PDF för att börja läsa";
+"Open PDF…" = "Öppna PDF…";
+"OK" = "OK";
+"Go to Page" = "Gå till sida";
+"Page number" = "Sidnummer";
+"Go" = "Gå";
+"Cancel" = "Avbryt";
+"Enter a page number from 1 to %lld." = "Ange ett sidnummer från 1 till %lld.";
+"Resume where you left off?" = "Fortsätta där du slutade?";
+"Resume at Page %lld" = "Fortsätt på sida %lld";
+"Start at Page 1" = "Börja på sida 1";
+"You were on page %lld of %lld last time. You can change this question in the settings sidebar under Documents." = "Förra gången var du på sida %lld av %lld. Du kan ändra den här frågan i inställningspanelen under Dokument.";
+
+/* Toolbar */
+"Open" = "Öppna";
+"Open PDF (⌘O)" = "Öppna PDF (⌘O)";
+"Page %lld of %lld" = "Sida %lld av %lld";
+"Page –" = "Sida –";
+"Go to page (⌥⌘G)" = "Gå till sida (⌥⌘G)";
+"Previous" = "Föregående";
+"Previous sentence (⌘←)" = "Föregående mening (⌘←)";
+"Play" = "Spela upp";
+"Pause" = "Pausa";
+"Play / Pause (Space)" = "Spela upp/pausa (mellanslag)";
+"Stop" = "Stoppa";
+"Stop (⌘.)" = "Stoppa (⌘.)";
+"Next" = "Nästa";
+"Next sentence (⌘→)" = "Nästa mening (⌘→)";
+"Auto-scroll" = "Autorullning";
+"Fit width" = "Anpassa till bredd";
+"Fit page" = "Anpassa till sida";
+"Zoom out" = "Zooma ut";
+"Zoom in" = "Zooma in";
+"Settings" = "Inställningar";
+"Show or hide reading settings" = "Visa eller dölj läsinställningar";
+
+/* Menus */
+"Open…" = "Öppna…";
+"Playback" = "Uppspelning";
+"Next Sentence" = "Nästa mening";
+"Previous Sentence" = "Föregående mening";
+"Go to Page…" = "Gå till sida…";
+"Read from here" = "Läs härifrån";
+
+/* Settings sidebar */
+"Voice" = "Röst";
+"Piper (neural)" = "Piper (neural)";
+"Apple" = "Apple";
+"Test voice" = "Testa rösten";
+"Get more Apple voices…" = "Hämta fler Apple-röster…";
+"In System Settings, click ⓘ next to System Voice, select Swedish, then click the download button next to an Enhanced or Premium voice." = "Klicka på ⓘ bredvid Systemröst i Systeminställningar, välj Svenska och klicka sedan på hämtningsknappen bredvid en förbättrad röst eller premiumröst.";
+"Speech" = "Tal";
+"Speed" = "Hastighet";
+"Pitch" = "Tonhöjd";
+"Pause between lines" = "Paus mellan rader";
+"Follow reading" = "Följ läsningen";
+"Reading zone" = "Läszon";
+"Drag a rectangle around the text to read on any page. Text outside it (headers, footers, page numbers) is skipped on every page of this PDF." = "Dra en rektangel runt texten som ska läsas, på valfri sida. Text utanför den (sidhuvuden, sidfötter, sidnummer) hoppas över på varje sida i den här PDF:en.";
+"Done" = "Klar";
+"Set reading zone…" = "Ange läszon…";
+"Change reading zone…" = "Ändra läszon…";
+"Read whole pages" = "Läs hela sidor";
+"View" = "Visning";
+"Pages" = "Sidor";
+"Continuous" = "Kontinuerlig";
+"Single page" = "En sida";
+"Two pages" = "Två sidor";
+"Auto-scroll speed" = "Hastighet för autorullning";
+"Documents" = "Dokument";
+"When reopening a PDF" = "När en PDF öppnas igen";
+"Ask to resume" = "Fråga om att fortsätta";
+"Resume at last page" = "Fortsätt på senaste sidan";
+"Start at page 1" = "Börja på sida 1";
+"Language" = "Språk";
+"Interface language" = "Gränssnittsspråk";
+"Automatic (system)" = "Automatiskt (systemets språk)";
+"Läsa must restart to change language." = "Läsa måste startas om för att byta språk.";
+"Restart Now" = "Starta om nu";
+
+/* Voices */
+"Premium" = "Premium";
+"Enhanced" = "Förbättrad";
+"Standard" = "Standard";
+"%@ (unavailable)" = "%@ (inte tillgänglig)";
+
+/* Alerts */
+"Could not open %@" = "Kunde inte öppna %@";
+"This PDF is password-protected." = "Den här PDF:en är lösenordsskyddad.";
+"No Swedish voice is available." = "Ingen svensk röst är tillgänglig.";
+"Could not load voice %@" = "Kunde inte läsa in rösten %@";

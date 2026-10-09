@@ -1,0 +1,73 @@
+# Pull requests: unit tests.
+# Pushes to main: tests + app build; the disk image is kept as a workflow artifact for 7 days.
+# Tags v*: tests + app build + a GitHub Release with Lasa.dmg and Lasa.zip
+# (fixed ASCII names, so .../releases/latest/download/Lasa.zip always points to the newest version).
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Never cancel a release in progress; superseded branch and PR runs can go.
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    permissions:
+      contents: write # publish releases from tags
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache speech engine and voices
+        uses: actions/cache@v6
+        with:
+          path: Vendor
+          key: vendor-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/fetch-vendor.sh') }}
+
+      - name: Toolchain
+        run: |
+          sw_vers
+          xcode-select -p
+          swift --version
+
+      - name: Unit tests
+        run: ./scripts/test.sh
+
+      - name: Build app
+        if: github.event_name == 'push'
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            export VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          export BUILD="$GITHUB_RUN_NUMBER"
+          ./scripts/build-app.sh
+          cp "build/Läsa.dmg" build/Lasa.dmg
+          cp "build/Läsa.zip" build/Lasa.zip
+
+      - name: Keep disk image
+        if: github.event_name == 'push' && github.ref_type == 'branch'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Lasa-${{ github.run_number }}
+          path: build/Lasa.dmg
+          retention-days: 7
+          compression-level: 0 # already compressed
+
+      - name: Publish release
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" build/Lasa.dmg build/Lasa.zip \
+            --title "Läsa ${GITHUB_REF_NAME#v}" \
+            --generate-notes \
+            --verify-tag

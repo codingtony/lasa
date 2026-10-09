@@ -1,0 +1,19 @@
+# SwiftPM / Xcode
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+*.xcodeproj/
+
+# Speech engine and voices, downloaded by scripts/fetch-vendor.sh (~300 MB).
+# Vendor.off/ is the temporary rename used by the bundle independence check in AGENT.md.
+Vendor/
+Vendor.off/
+
+# Outputs of scripts/build-app.sh and scripts/make-icon.swift
+build/
+*.iconset/
+
+# macOS
+.DS_Store
+._*
