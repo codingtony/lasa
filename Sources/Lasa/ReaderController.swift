@@ -182,7 +182,8 @@ final class ReaderController {
     }
 
     /// UTF-16 offset in the page text at `point` (page space). With `requireHit`, clicks
-    /// outside any text return nil; otherwise they fall back to the nearest following line.
+    /// outside any text return nil; otherwise they fall back to the next line below in the same
+    /// column, else the next line in reading order.
     private func textOffset(on page: PDFPage, at index: Int, point: CGPoint, requireHit: Bool) async -> Int? {
         guard let provider, let text = await provider.text(forPageAt: index) else { return nil }
         if !text.isOCR {
@@ -206,7 +207,9 @@ final class ReaderController {
             return line.range.location + min(Int(fraction * CGFloat(line.range.length)), max(line.range.length - 1, 0))
         }
         if requireHit { return nil }
-        return text.ocrLines.first(where: { $0.rect.midY <= point.y })?.range.location ?? 0
+        let below = text.ocrLines.filter { $0.rect.midY <= point.y }
+        let line = below.first(where: { $0.rect.minX <= point.x && point.x <= $0.rect.maxX }) ?? below.first
+        return line?.range.location ?? 0
     }
 
     func stop() {

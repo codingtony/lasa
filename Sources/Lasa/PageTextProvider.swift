@@ -112,6 +112,7 @@ extension PageText {
 
 /// `rotation` is the page's clockwise /Rotate: the thumbnail, and so Vision's boxes, are in the
 /// rotated orientation, which `ReadingZone.pageRect` maps back to page space.
+/// Lines are ordered column by column via `ReadingOrder`.
 private func recognize(_ image: CGImage, pageIndex: Int, mediaBox: CGRect, rotation: Int) -> PageText {
     let request = VNRecognizeTextRequest()
     request.recognitionLevel = .accurate
@@ -128,7 +129,13 @@ private func recognize(_ image: CGImage, pageIndex: Int, mediaBox: CGRect, rotat
         return PageText(pageIndex: pageIndex, raw: "", isOCR: true, ocrLines: [])
     }
 
-    let observations = (request.results ?? []).sorted { $0.boundingBox.midY > $1.boundingBox.midY }
+    let results = request.results ?? []
+    let w = CGFloat(image.width), h = CGFloat(image.height)
+    let pixelBoxes = results.map { o -> CGRect in
+        let b = o.boundingBox
+        return CGRect(x: b.minX * w, y: b.minY * h, width: b.width * w, height: b.height * h)
+    }
+    let observations = ReadingOrder.order(pixelBoxes).map { results[$0] }
     var raw = ""
     var lines: [OCRLine] = []
     for observation in observations {

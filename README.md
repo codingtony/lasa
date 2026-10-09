@@ -103,7 +103,7 @@ By default, Läsa follows your Mac's language: Swedish on a Mac set to Swedish, 
 
 ### Tips
 
-- **Scanned pages:** the first time Läsa reads a scanned page, it needs about half a second to recognise the text. On scanned pages the highlight marks whole lines instead of words.
+- **Scanned pages:** the first time Läsa reads a scanned page, it needs about half a second to recognise the text. On scanned pages the highlight marks whole lines instead of words. Pages with two columns are read column by column.
 - **Multiple-choice questions run together?** Raise **Pause between lines** under Speech. Each answer option and heading gets the full pause; sentences inside a paragraph get a shorter one.
 - **English text** is read with a Swedish voice and sounds accented.
 - Läsa remembers everything between launches: the last PDF and page, the voice, all settings, and the reading zone of each PDF.
