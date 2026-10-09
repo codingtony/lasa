@@ -8,8 +8,9 @@ Läsa is a macOS (Apple Silicon, macOS 14+) PDF reader that reads Swedish text a
 |---|---|
 | `Sources/LasaCore/Segmenter.swift` | Pure text → speech segments (`segments(of:startingAt:)`, `Segment`). Unit-tested. |
 | `Sources/LasaCore/ReadingZone.swift` | Pure geometry: the part of each page that is read aloud, in display-normalized coordinates. Unit-tested. |
+| `Sources/LasaCore/ReadingOrder.swift` | Pure geometry: OCR line boxes → reading order (recursive XY-cut, widest gap first, columns win ties, leaf = top→bottom). Unit-tested. |
 | `Sources/Lasa/ReaderController.swift` | `@MainActor @Observable` singleton. Owns the document, the reading loop (page → segments → engine), pauses, highlights, follow, click-to-jump, go-to-page, and the resume offer. |
-| `Sources/Lasa/PageTextProvider.swift` | Gets page text from the PDF text layer when it has ≥ 20 chars; otherwise runs Vision OCR (`sv-SE`) at 2.5× render. Caches per page and prefetches the next page. With a reading zone set, `PageText.restricted` blanks out-of-zone lines with spaces (indices unchanged, so highlights and clicks still map); zoned pages are cached separately and dropped when the zone changes. |
+| `Sources/Lasa/PageTextProvider.swift` | Gets page text from the PDF text layer when it has ≥ 20 chars; otherwise runs Vision OCR (`sv-SE`) at 2.5× render and orders the lines with `ReadingOrder` (boxes in rendered-image pixels), so columns are read one after the other. Caches per page and prefetches the next page. With a reading zone set, `PageText.restricted` blanks out-of-zone lines with spaces (indices unchanged, so highlights and clicks still map); zoned pages are cached separately and dropped when the zone changes. |
 | `Sources/Lasa/Speech/` | `SpeechEngine` protocol; `AppleSpeechEngine` (AVSpeechSynthesizer, word callbacks); `PiperSpeechEngine` (sherpa-onnx C API + AVAudioEngine); `VoiceCatalog` (`VoiceID` strings `apple:<id>` / `piper:<folder>`; `defaultPiperFolder` is Lisa, used when no voice was ever chosen). |
 | `Sources/Lasa/PDFKitView.swift` | `ReaderPDFView` (click monitor, "Read from here" menu, reading-zone editor: while editing, the monitor consumes drags and `ReadingZoneOverlay` dims outside the zone on visible pages) and its coordinator (fit modes, auto-scroll timer, page-change persistence). |
 | `Sources/Lasa/{ContentView,InspectorView,LasaApp,Settings,HighlightAnnotation}.swift` | UI, menus, UserDefaults keys (`SettingsKey`, `ResumeMode`), and the highlight annotation. |
@@ -104,7 +105,7 @@ Multiple-choice pages ("Välj ett alternativ:" + options) must keep every option
 
 There are no Accessibility or Screen Recording permissions: `osascript` System Events and `screencapture` fail. Synthetic `NSEvent`s do not reach PDFKit either (even a synthetic drag doesn't select text). What works is a throwaway harness:
 
-1. Compile `Sources/Lasa/*.swift` and `Sources/Lasa/Speech/*.swift` (minus `LasaApp.swift`) together with `.build/arm64-apple-macosx/debug/LasaCore.build/{Segmenter,ReadingZone}.swift.o`, `-I .build/.../debug/Modules`, `-I Sources/CSherpaOnnx/include`, and the sherpa `-L`/`-rpath` flags. Use `-swift-version 5`. Alternative: temporarily add `"Lasa"` to the test target's dependencies and `@testable import Lasa` from a throwaway test (run via `scripts/test.sh`); `NSApp.postEvent` + pumping `nextEvent` does reach the local `NSEvent` monitors.
+1. Compile `Sources/Lasa/*.swift` and `Sources/Lasa/Speech/*.swift` (minus `LasaApp.swift`) together with `.build/arm64-apple-macosx/debug/LasaCore.build/{Segmenter,ReadingZone,ReadingOrder}.swift.o`, `-I .build/.../debug/Modules`, `-I Sources/CSherpaOnnx/include`, and the sherpa `-L`/`-rpath` flags. Use `-swift-version 5`. Alternative: temporarily add `"Lasa"` to the test target's dependencies and `@testable import Lasa` from a throwaway test (run via `scripts/test.sh`); `NSApp.postEvent` + pumping `nextEvent` does reach the local `NSEvent` monitors.
 2. Host `ContentView(controller: ReaderController.shared)` in an `NSHostingView` inside an `NSWindow`. Drive the controller directly (`open`, `play`, `wordClicked`, `goToPage`, setting UserDefaults keys) and pump `RunLoop.main`.
 3. Observe:
    - `HighlightAnnotation`s on pages;
@@ -123,4 +124,5 @@ Test fixtures: use one PDF with a text layer and one image-only (scanned) PDF, w
 
 - UI text is English with Swedish translations; spoken content is Swedish. Every new UI string needs an entry in `Packaging/sv.lproj/Localizable.strings` (same key, same format specifiers).
 - New settings go in `SettingsKey` + `Settings.registerDefaults()`. Views use `@AppStorage` and the controller reads through `Settings`.
+- Never name, quote, or reproduce a PDF the user shares (file name, title, page text, screenshots) in code, comments, tests, fixtures, docs, or commit messages: it may not be shareable. Describe it generically ("a two-column scanned page") and build synthetic test data.
 - Run `./scripts/test.sh` and `./scripts/build-app.sh` before handing over; the README describes user-visible behaviour.
